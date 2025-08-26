@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رحلة السرعة - علوم 3 إعدادي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+        body {
+            font-family: 'Tajawal', sans-serif;
+            direction: rtl; /* Set direction to right-to-left for Arabic */
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main Container -->
+    <div id="app-container" class="bg-gray-800 p-8 rounded-3xl shadow-2xl shadow-purple-900/50 w-full max-w-2xl mx-auto my-8 border-4 border-gray-700">
+        
+        <!-- App Header -->
+        <header class="flex flex-col items-center mb-6">
+            <img src="https://googleusercontent.com/file_content/0" alt="شعار الموقع" class="w-28 h-28 mb-4 rounded-full shadow-lg border-4 border-purple-500 transform hover:scale-110 transition-transform duration-300">
+            <h1 class="text-4xl font-bold text-center text-purple-400">رحلة السرعة</h1>
+            <p class="text-lg text-gray-400 mt-2 text-center">لعبة تعليمية لمادة العلوم - الصف الثالث الإعدادي</p>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <main id="game-content" class="text-center">
+            
+            <!-- Game Start Screen -->
+            <div id="start-screen" class="space-y-6 animate-fade-in">
+                <h2 class="text-3xl font-semibold mb-4 text-white">مرحباً بك في رحلة السرعة!</h2>
+                <p class="text-gray-300 leading-relaxed">اختبر معلوماتك في دروس الحركة والسرعة. اللعبة ستعرض لك أسئلة عن السرعة المنتظمة، السرعة غير المنتظمة، السرعة المتوسطة، والسرعة النسبية.</p>
+                <p class="text-gray-300 leading-relaxed">أجب على الأسئلة لتتقدم في اللعبة. في حال كانت الإجابة خاطئة، ستحصل على شرح للمفهوم الصحيح.</p>
+                <button id="start-button" class="mt-8 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105">
+                    ابدأ اللعب
+                </button>
+            </div>
+
+            <!-- Quiz Screen (Initially Hidden) -->
+            <div id="quiz-screen" class="hidden space-y-6">
+                <div class="flex justify-between items-center mb-6 text-gray-400 font-semibold text-lg">
+                    <p>السؤال <span id="current-question-index">1</span> من <span id="total-questions"></span></p>
+                    <p>النقاط: <span id="score">0</span></p>
+                </div>
+                
+                <div class="bg-gray-700/50 p-6 rounded-2xl border-2 border-gray-600 animate-fade-in">
+                    <h2 id="question-text" class="text-2xl font-semibold text-white leading-relaxed mb-4"></h2>
+                    
+                    <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <!-- Options will be injected here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Final Score Screen -->
+                <div id="final-screen" class="hidden space-y-6 animate-fade-in">
+                    <h2 class="text-3xl font-bold text-white mb-4">انتهت اللعبة!</h2>
+                    <p id="final-score-text" class="text-3xl text-yellow-400 font-bold mb-4"></p>
+                    <p id="final-message" class="text-gray-300 leading-relaxed"></p>
+                    <button id="restart-button" class="mt-8 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105">
+                        ابدأ من جديد
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden animate-fade-in">
+        <div class="bg-gray-800 p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center border-4 border-gray-700 transform transition-transform duration-300 scale-95">
+            <h3 id="modal-title" class="text-2xl font-bold mb-4"></h3>
+            <p id="modal-explanation" class="text-gray-300 leading-relaxed mb-6"></p>
+            <button id="modal-next-button" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition transform hover:scale-105">
+                السؤال التالي
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // The core game questions array
+        const questions = [
+            {
+                question: "ما هو نوع السرعة التي يقطع فيها الجسم مسافات متساوية في أزمنة متساوية؟",
+                options: ["السرعة المتوسطة", "السرعة المنتظمة", "السرعة النسبية", "السرعة غير المنتظمة"],
+                answer: "السرعة المنتظمة",
+                explanation: "السرعة المنتظمة هي تعريفها الأساسي، حيث يظل مقدار السرعة ثابتًا بمرور الوقت."
+            },
+            {
+                question: "إذا تحرك جسم بسرعة 100 كم/ساعة ثم زادت سرعته إلى 120 كم/ساعة، فهذه سرعة...؟",
+                options: ["منتظمة", "متوسطة", "نسبية", "غير منتظمة"],
+                answer: "غير منتظمة",
+                explanation: "السرعة غير المنتظمة هي التي تتغير فيها سرعة الجسم بمرور الزمن، سواء بالزيادة أو النقصان."
+            },
+            {
+                question: "يتحرك قطار بسرعة 60 كم/ساعة. إذا كان راكب آخر يجلس بداخله، فما هي سرعة الراكب بالنسبة للقطار؟",
+                options: ["60 كم/ساعة", "صفر", "أكثر من 60 كم/ساعة", "لا يمكن التحديد"],
+                answer: "صفر",
+                explanation: "السرعة النسبية هي سرعة جسم بالنسبة لجسم آخر. الراكب لا يتحرك بالنسبة للقطار، لذا سرعته النسبية تساوي صفرًا."
+            },
+            {
+                question: "ما هو القانون المستخدم لحساب السرعة المتوسطة؟",
+                options: ["المسافة × الزمن", "الزمن ÷ المسافة", "المسافة الكلية ÷ الزمن الكلي", "السرعة المنتظمة × الزمن"],
+                answer: "المسافة الكلية ÷ الزمن الكلي",
+                explanation: "السرعة المتوسطة هي المسافة الكلية التي يقطعها الجسم مقسومة على الزمن الكلي المستغرق لقطع هذه المسافة."
+            },
+            {
+                question: "سيارتان تتحركان في نفس الاتجاه. سرعة السيارة الأولى 100 كم/ساعة، وسرعة السيارة الثانية 80 كم/ساعة. ما هي السرعة النسبية للسيارة الثانية بالنسبة للأولى؟",
+                options: ["180 كم/ساعة", "20 كم/ساعة", "100 كم/ساعة", "-20 كم/ساعة"],
+                answer: "20 كم/ساعة",
+                explanation: "عندما يتحرك جسمان في نفس الاتجاه، السرعة النسبية = سرعة الجسم الأول - سرعة الجسم الثاني. 100 - 80 = 20 كم/ساعة."
+            },
+            {
+                question: "جسمان يتحركان في اتجاهين متعاكسين. سرعة الأول 50 كم/ساعة وسرعة الثاني 70 كم/ساعة. ما هي السرعة النسبية لأحدهما بالنسبة للآخر؟",
+                options: ["20 كم/ساعة", "120 كم/ساعة", "50 كم/ساعة", "70 كم/ساعة"],
+                answer: "120 كم/ساعة",
+                explanation: "عندما يتحرك جسمان في اتجاهين متعاكسين، السرعة النسبية = سرعة الجسم الأول + سرعة الجسم الثاني. 50 + 70 = 120 كم/ساعة."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // Get all relevant elements from the DOM
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const startButton = document.getElementById('start-button');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const currentQuestionIndexSpan = document.getElementById('current-question-index');
+        const totalQuestionsSpan = document.getElementById('total-questions');
+        const scoreSpan = document.getElementById('score');
+        const finalScreen = document.getElementById('final-screen');
+        const finalScoreText = document.getElementById('final-score-text');
+        const finalMessage = document.getElementById('final-message');
+        const restartButton = document.getElementById('restart-button');
+        const feedbackModal = document.getElementById('feedback-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalExplanation = document.getElementById('modal-explanation');
+        const modalNextButton = document.getElementById('modal-next-button');
+
+        totalQuestionsSpan.textContent = questions.length;
+
+        // Function to display the current question
+        const showQuestion = () => {
+            if (currentQuestionIndex >= questions.length) {
+                showFinalScreen();
+                return;
+            }
+            const q = questions[currentQuestionIndex];
+            questionText.textContent = q.question;
+            optionsContainer.innerHTML = '';
+            
+            // Shuffle options to make the quiz more challenging
+            const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'bg-gray-700 hover:bg-purple-600 text-white font-semibold py-4 px-6 rounded-xl transition transform hover:scale-105 shadow-md';
+                button.onclick = () => checkAnswer(option, q.answer, q.explanation);
+                optionsContainer.appendChild(button);
+            });
+
+            currentQuestionIndexSpan.textContent = currentQuestionIndex + 1;
+        };
+
+        // Function to check the selected answer and show modal feedback
+        const checkAnswer = (selected, correct, explanation) => {
+            // Disable buttons to prevent multiple clicks
+            optionsContainer.classList.add('pointer-events-none');
+            
+            if (selected === correct) {
+                score++;
+                scoreSpan.textContent = score;
+                modalTitle.textContent = "إجابة صحيحة! 🎉";
+                modalExplanation.textContent = "";
+                modalNextButton.textContent = "السؤال التالي";
+                modalNextButton.classList.add('bg-purple-600');
+                modalNextButton.classList.remove('bg-red-600');
+            } else {
+                modalTitle.textContent = "إجابة خاطئة! 😔";
+                modalExplanation.textContent = `الشرح: ${explanation}`;
+                modalNextButton.textContent = "السؤال التالي";
+                modalNextButton.classList.remove('bg-purple-600');
+                modalNextButton.classList.add('bg-red-600');
+            }
+            
+            feedbackModal.classList.remove('hidden');
+        };
+
+        // Function to move to the next question
+        const nextQuestion = () => {
+            feedbackModal.classList.add('hidden');
+            optionsContainer.classList.remove('pointer-events-none'); // Re-enable buttons
+            currentQuestionIndex++;
+            showQuestion();
+        };
+
+        // Function to show the final score screen
+        const showFinalScreen = () => {
+            quizScreen.classList.add('hidden');
+            finalScreen.classList.remove('hidden');
+            finalScoreText.textContent = `لقد حصلت على ${score} من ${questions.length} نقاط.`;
+            if (score === questions.length) {
+                finalMessage.textContent = "أنت عبقري فيزياء! إجاباتك كلها صحيحة.";
+            } else if (score >= questions.length / 2) {
+                finalMessage.textContent = "عمل جيد! يمكنك المراجعة لتحصل على درجة أعلى.";
+            } else {
+                finalMessage.textContent = "لا بأس، اللعبة فرصة ممتازة للمراجعة. حاول مرة أخرى!";
+            }
+        };
+
+        // Function to restart the game
+        const restartGame = () => {
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreSpan.textContent = score;
+            finalScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            // Hide the quiz screen initially when restarting
+            quizScreen.classList.add('hidden');
+        };
+
+        // Event Listeners
+        startButton.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            showQuestion();
+        });
+
+        modalNextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', restartGame);
+    </script>
+</body>
+</html>
